@@ -9,20 +9,37 @@ discardChar rb 1
 
 
 section '.data' writable
-ROWS = 5
-COLS = 5
-map db '#','#','#','#','#'
-    db '#','.','.','.','#'
-    db '#','.','.','.','#'
-    db '#','.','.','.','#'
-    db '#','#','#','#','#'
+ROWS = 9
+COLS = 9
+map db '#','#','#','#','#','#','#','#','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','.','.','.','.','.','.','.','#'
+    db '#','#','#','#','#','#','#','#','#'
 
-x dq 2
-y dq 2
+x dq 4
+y dq 4
+
+msg1 db 'Ходилки Бродилки FASM edetion',0
+msg2 db 'Чтобы вызвать справочник введите: h',0
+msgHelp db 'СПРАВОЧНИК',0
+msgHelp1 db 'Управление в игре осуществляется путём, ввода одной буквы в консоль',0
+msgHelp2 db 'Для управление игроком используются следующие буквы: w,a,s,d',0
+msgHelp3 db 'Чтобы выйти из игры введите: q',0
+msgHelp4 db 'Для вызов справочника (если что Вы читает этот самый справочник) введите: h',0
 
 
 section '.main' executable
 _start:
+    mov rax,msg1
+    call printStr
+    mov rax,msg2
+    call printStr
+    call newLine
     call setMan
     call mapDraw
     .iWhile:
@@ -37,6 +54,66 @@ _start:
         jmp .iWhile
 
 
+section '.instruction' executable
+instruction:
+    call newLine
+    push rax
+    mov rax,msgHelp
+    call printStr
+    mov rax,msgHelp1
+    call printStr
+    mov rax,msgHelp2
+    call printStr
+    mov rax,msgHelp3
+    call printStr
+    mov rax,msgHelp4
+    call printStr
+    call newLine
+    pop rax
+    ret
+
+
+; INPUT
+; rax - строка
+; OUTPUT
+; rax - длина строки
+section '.lenStr' executable
+lenStr:
+    push rcx
+    xor rcx,rcx
+    .iter:
+        cmp [rax + rcx], byte 0
+        je .close
+        inc rcx
+        jmp .iter
+    .close:
+        mov rax,rcx
+        pop rcx
+        ret
+
+
+; INPUT
+; rax - строка
+section '.printStr' executable
+printStr:
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    mov rsi,rax
+    call lenStr
+    mov rdx,rax
+    mov rax,1
+    mov rdi,1
+    syscall
+    call newLine
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+    ret
+
+
 section '.inputManager' executable
 inputManager:
     push rax
@@ -48,6 +125,8 @@ inputManager:
     xor rdx,rdx
     cmp al,'q'
     je .gameOver
+    cmp al,'h'
+    je .help
     cmp al,'w';
     je .up
     cmp al,'a';
@@ -98,6 +177,9 @@ inputManager:
         pop rax
         call exit
     
+    .help:
+        call instruction
+
     .close:
         pop rdx
         pop rcx
@@ -140,10 +222,7 @@ check:
         jmp .close
     .iter:
         push rax
-        xor rax,rax
-        mov rax,5
-        imul rax,rdx
-        add rax,rcx
+        call definePoint
         movzx rbx,[map + rax]
         pop rax
     .close:
@@ -190,10 +269,7 @@ inputChar:
 section '.unSetMan' executable
 unSetMan:
     push rax
-    xor rax,rax
-    mov rax,5
-    imul rax,[y]
-    add rax,[x]
+    call definePoint
     mov [map + rax], '.'
     pop rax
     ret
@@ -202,12 +278,19 @@ unSetMan:
 section '.setMan' executable
 setMan:
     push rax
-    xor rax,rax
-    mov rax,5
-    imul rax,[y]
-    add rax,[x]
+    call definePoint
     mov [map + rax], '@'
     pop rax
+    ret
+
+
+; OUTPUT
+; rax - число в массиве
+section '.definePoint' executable
+definePoint:
+    mov rax,ROWS
+    imul rax,[y]
+    add rax,[x]
     ret
 
 
