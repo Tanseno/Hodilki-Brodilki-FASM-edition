@@ -222,8 +222,10 @@ check:
         jmp .close
     .iter:
         push rax
-        call definePoint
-        movzx rbx,[map + rax]
+        mov rax, ROWS
+        imul rax, rdx
+        add rax, rcx
+        movzx rbx, byte [map + rax]
         pop rax
     .close:
         pop rdx
